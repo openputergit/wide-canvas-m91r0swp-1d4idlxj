@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .clay-effect {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 
+                20px 20px 60px rgba(0, 0, 0, 0.05),
+                -20px -20px 60px rgba(255, 255, 255, 0.8),
+                inset 8px 8px 16px rgba(0, 0, 0, 0.05),
+                inset -8px -8px 16px rgba(255, 255, 255, 0.9);
+        }
+        body {
+            background: #e0e5ec;
+        }
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="loading clay-effect p-4">
+        <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500"></div>
+    </div>
+
+    <!-- Login Section -->
+    <div id="loginSection" class="container mx-auto p-4 h-screen flex items-center justify-center">
+        <div class="clay-effect p-8 w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6 text-center text-gray-700">Admin Login</h2>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <input type="text" id="username" placeholder="Username" class="w-full p-3 rounded-lg bg-white border focus:outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+                <div>
+                    <input type="password" id="password" placeholder="Password" class="w-full p-3 rounded-lg bg-white border focus:outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+                <button type="submit" class="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300 clay-effect">
+                    Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="container mx-auto p-4 hidden">
+        <div class="clay-effect p-6 mb-6">
+            <h1 class="text-2xl font-bold text-gray-700 mb-4">Admin Dashboard</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <button onclick="showSection('deposit')" class="clay-effect p-4 text-center hover:shadow-lg transition-all">
+                    Deposit
+                </button>
+                <button onclick="showSection('withdrawal')" class="clay-effect p-4 text-center hover:shadow-lg transition-all">
+                    Withdrawal
+                </button>
+                <button onclick="showSection('payment')" class="clay-effect p-4 text-center hover:shadow-lg transition-all">
+                    Payment
+                </button>
+                <button onclick="showSection('createId')" class="clay-effect p-4 text-center hover:shadow-lg transition-all">
+                    Create ID
+                </button>
+            </div>
+        </div>
+
+        <!-- Sections -->
+        <div id="deposit" class="section hidden clay-effect p-6">
+            <h2 class="text-xl font-bold mb-4">Deposit Requests</h2>
+            <div id="depositList" class="space-y-4"></div>
+        </div>
+
+        <div id="withdrawal" class="section hidden clay-effect p-6">
+            <h2 class="text-xl font-bold mb-4">Withdrawal Requests</h2>
+            <div id="withdrawalList" class="space-y-4"></div>
+        </div>
+
+        <div id="payment" class="section hidden clay-effect p-6">
+            <h2 class="text-xl font-bold mb-4">Payment Management</h2>
+            <!-- Payment management content -->
+        </div>
+
+        <div id="createId" class="section hidden clay-effect p-6">
+            <h2 class="text-xl font-bold mb-4">Create New User ID</h2>
+            <form id="createUserForm" class="space-y-4">
+                <input type="text" placeholder="Username" id="newUsername" class="w-full p-3 rounded-lg">
+                <input type="text" placeholder="Site" id="site" class="w-full p-3 rounded-lg">
+                <input type="password" placeholder="Password" id="newPassword" class="w-full p-3 rounded-lg">
+                <button type="submit" class="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Create User</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const appSlug = 'admin-panel-123456';
+        let currentUser = null;
+
+        // Show loading animation
+        function showLoading() {
+            document.querySelector('.loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.querySelector('.loading').style.display = 'none';
+        }
+
+        // MongoDB Operations
+        async function mongoDBOperation(action, collection, data = null, conditions = null, id = null) {
+            showLoading();
+            try {
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer NbQSSAipBKcpQPFnNUzd5Tk7eWT2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug,
+                        action,
+                        collection,
+                        data,
+                        conditions,
+                        id
+                    })
+                });
+                const result = await response.json();
+                hideLoading();
+                return result;
+            } catch (error) {
+                hideLoading();
+                console.error('Error:', error);
+                return null;
+            }
+        }
+
+        // Login Handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === 'admin' && password === 'admin123') {
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                loadDashboardData();
+            } else {
+                alert('Invalid credentials');
+            }
+        });
+
+        // Create User Handler
+        document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('newUsername').value;
+            const site = document.getElementById('site').value;
+            const password = document.getElementById('newPassword').value;
+
+            const result = await mongoDBOperation('create', 'users', {
+                username,
+                site,
+                password,
+                createdAt: new Date()
+            });
+
+            if (result?.success) {
+                alert('User created successfully');
+                document.getElementById('createUserForm').reset();
+            } else {
+                alert('Error creating user');
+            }
+        });
+
+        // Show Section
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        // Load Dashboard Data
+        async function loadDashboardData() {
+            const deposits = await mongoDBOperation('read', 'deposits');
+            const withdrawals = await mongoDBOperation('read', 'withdrawals');
+
+            if (deposits?.success) {
+                const depositList = document.getElementById('depositList');
+                depositList.innerHTML = deposits.result.read.map(deposit => `
+                    <div class="clay-effect p-4">
+                        <p>User: ${deposit.username}</p>
+                        <p>Amount: $${deposit.amount}</p>
+                        <p>Status: ${deposit.status}</p>
+                        <button onclick="updateDepositStatus('${deposit._id}', 'approved')" 
+                                class="bg-green-500 text-white px-4 py-2 rounded mr-2">
+                            Approve
+                        </button>
+                        <button onclick="updateDepositStatus('${deposit._id}', 'rejected')" 
+                                class="bg-red-500 text-white px-4 py-2 rounded">
+                            Reject
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            if (withdrawals?.success) {
+                const withdrawalList = document.getElementById('withdrawalList');
+                withdrawalList.innerHTML = withdrawals.result.read.map(withdrawal => `
+                    <div class="clay-effect p-4">
+                        <p>User: ${withdrawal.username}</p>
+                        <p>Amount: $${withdrawal.amount}</p>
+                        <p>Status: ${withdrawal.status}</p>
+                        <button onclick="updateWithdrawalStatus('${withdrawal._id}', 'approved')" 
+                                class="bg-green-500 text-white px-4 py-2 rounded mr-2">
+                            Approve
+                        </button>
+                        <button onclick="updateWithdrawalStatus('${withdrawal._id}', 'rejected')" 
+                                class="bg-red-500 text-white px-4 py-2 rounded">
+                            Reject
+                        </button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Update Status Functions
+        async function updateDepositStatus(id, status) {
+            const result = await mongoDBOperation('update', 'deposits', { status }, { _id: id });
+            if (result?.success) {
+                loadDashboardData();
+            }
+        }
+
+        async function updateWithdrawalStatus(id, status) {
+            const result = await mongoDBOperation('update', 'withdrawals', { status }, { _id: id });
+            if (result?.success) {
+                loadDashboardData();
+            }
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
